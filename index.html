@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To Do Widget</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg-secondary: #f7f7f5;
+      --bg-hover: #f0efeb;
+      --text-primary: #1a1a1a;
+      --text-secondary: #555550;
+      --text-tertiary: #999990;
+      --border: rgba(0,0,0,0.10);
+      --border-hover: rgba(0,0,0,0.18);
+      --border-strong: rgba(0,0,0,0.25);
+      --star-fill: #EF9F27;
+      --star-stroke: #BA7517;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --accent: #EF9F27;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg-secondary: #2a2a27;
+        --bg-hover: #333330;
+        --text-primary: #f0efeb;
+        --text-secondary: #b0afa8;
+        --text-tertiary: #6e6e68;
+        --border: rgba(255,255,255,0.10);
+        --border-hover: rgba(255,255,255,0.18);
+        --border-strong: rgba(255,255,255,0.25);
+      }
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1.5rem 3rem;
+    }
+
+    .login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1rem;
+      text-align: center;
+    }
+
+    .login-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-sub { font-size: 13px; color: var(--text-tertiary); margin-bottom: 1rem; line-height: 1.7; }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: var(--bg);
+      border: 0.5px solid var(--border-hover);
+      border-radius: var(--radius-lg);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .google-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+    .google-logo { width: 18px; height: 18px; }
+
+    .loading-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      color: var(--text-tertiary);
+      font-size: 13px;
+      gap: 8px;
+    }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .todo-wrap { max-width: 620px; margin: 0 auto; }
+
+    .todo-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+    }
+
+    .todo-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--text-primary);
+      letter-spacing: -0.02em;
+    }
+
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .todo-count { font-size: 12px; color: var(--text-tertiary); }
+
+    .logout-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 12px; color: var(--text-tertiary);
+      padding: 2px 6px; border-radius: var(--radius-md);
+      transition: color 0.12s, background 0.12s;
+    }
+    .logout-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+
+    .progress-row { display: flex; align-items: center; gap: 10px; margin-bottom: 1.25rem; }
+
+    .progress-bar-bg { flex: 1; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+
+    .progress-bar-fill {
+      height: 100%; background: var(--accent);
+      border-radius: 99px; transition: width 0.35s ease;
+    }
+
+    .progress-label { font-size: 12px; color: var(--text-tertiary); min-width: 34px; text-align: right; }
+
+    .todo-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+
+    .todo-item {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      transition: border-color 0.15s, opacity 0.2s;
+    }
+
+    .todo-item:hover { border-color: var(--border-hover); }
+    .todo-item.done { opacity: 0.50; }
+
+    .todo-row { display: flex; align-items: center; padding: 12px 14px; gap: 10px; }
+
+    .star-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 0; width: 24px; height: 24px;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    }
+
+    .star-svg { width: 20px; height: 20px; transition: transform 0.2s cubic-bezier(.34,1.56,.64,1); }
+    .star-btn:hover .star-svg { transform: scale(1.28); }
+
+    .star-path {
+      fill: none; stroke: var(--text-tertiary);
+      stroke-width: 1.6; stroke-linejoin: round;
+      transition: fill 0.18s, stroke 0.18s;
+    }
+    .star-path.filled { fill: var(--star-fill); stroke: var(--star-stroke); }
+
+    .todo-text {
+      flex: 1; font-size: 14px; color: var(--text-primary);
+      font-weight: 400; line-height: 1.45; word-break: break-word;
+    }
+    .todo-item.done .todo-text { text-decoration: line-through; color: var(--text-tertiary); }
+
+    .edit-input {
+      flex: 1;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 400;
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border-strong);
+      border-radius: var(--radius-md);
+      padding: 3px 8px; outline: none; line-height: 1.45;
+    }
+
+    .toggle-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 4px; display: flex; align-items: center;
+      color: var(--text-tertiary); border-radius: var(--radius-md);
+      transition: color 0.12s, background 0.12s; flex-shrink: 0;
+    }
+    .toggle-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+
+    .toggle-icon { font-size: 16px; transition: transform 0.22s ease; display: inline-block; }
+    .toggle-icon.open { transform: rotate(180deg); }
+
+    .icon-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 4px; display: flex; align-items: center;
+      color: var(--text-tertiary); border-radius: var(--radius-md);
+      flex-shrink: 0; opacity: 0;
+      transition: opacity 0.15s, color 0.12s, background 0.12s;
+    }
+    .todo-item:hover .icon-btn { opacity: 1; }
+    .icon-btn:hover { color: var(--text-secondary); background: var(--bg-hover); }
+    .icon-btn.delete-btn:hover { color: #E24B4A; background: #FCEBEB; }
+    .icon-btn i { font-size: 15px; }
+
+    .detail-area {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.28s ease;
+    }
+    .detail-area.open { max-height: 500px; }
+
+    .detail-inner {
+      border-top: 0.5px solid var(--border);
+      padding: 10px 14px 14px 48px;
+    }
+
+    .detail-textarea {
+      width: 100%; min-height: 76px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: var(--text-secondary);
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 8px 10px; resize: vertical;
+      line-height: 1.65; outline: none;
+      transition: border-color 0.15s;
+    }
+    .detail-textarea:focus { border-color: var(--border-strong); }
+    .detail-textarea::placeholder { color: var(--text-tertiary); font-style: italic; }
+
+    .add-area { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+
+    .add-input {
+      flex: 1; height: 40px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; color: var(--text-primary);
+      background: var(--bg-secondary);
+      border: 0.5px dashed var(--border-hover);
+      border-radius: var(--radius-md);
+      padding: 0 12px; outline: none;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .add-input:focus { border-style: solid; border-color: var(--border-strong); background: var(--bg); }
+    .add-input::placeholder { color: var(--text-tertiary); }
+
+    .add-btn {
+      height: 40px; padding: 0 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px; font-weight: 500;
+      color: var(--text-primary); background: var(--bg);
+      border: 0.5px solid var(--border-hover);
+      border-radius: var(--radius-md);
+      cursor: pointer; display: flex; align-items: center; gap: 5px;
+      transition: background 0.12s, border-color 0.12s; white-space: nowrap;
+    }
+    .add-btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
+    .add-btn:active { transform: scale(0.97); }
+
+    .empty-state {
+      text-align: center; padding: 2rem 0 1.5rem;
+      color: var(--text-tertiary); font-size: 13px;
+    }
+    .empty-state i { font-size: 28px; display: block; margin-bottom: 8px; opacity: 0.5; }
+
+    .sync-status { font-size: 11px; color: var(--text-tertiary); text-align: right; margin-top: 8px; min-height: 16px; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="loading-screen" class="loading-screen">
+    <div class="spinner"></div>
+    <span>불러오는 중...</span>
+  </div>
+
+  <div id="login-screen" class="login-screen hidden">
+    <p class="login-title">할 일</p>
+    <p class="login-sub">구글 계정으로 로그인하면<br>모든 기기에서 동기화돼요</p>
+    <button class="google-btn" id="login-btn">
+      <svg class="google-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>
+      Google로 로그인
+    </button>
+  </div>
+
+  <div id="app-screen" class="todo-wrap hidden">
+    <div class="todo-header">
+      <h1 class="todo-title">할 일</h1>
+      <div class="header-right">
+        <span class="todo-count" id="count-label"></span>
+        <button class="logout-btn" id="logout-btn">로그아웃</button>
+      </div>
+    </div>
+
+    <div class="progress-row">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+      <span class="progress-label" id="progress-label">0%</span>
+    </div>
+
+    <div class="todo-list" id="todo-list"></div>
+
+    <div class="add-area">
+      <input class="add-input" id="add-input" type="text" placeholder="+ 새 할 일 추가..." maxlength="100" />
+      <button class="add-btn" id="add-btn">
+        <i class="ti ti-plus" aria-hidden="true"></i>추가
+      </button>
+    </div>
+
+    <div class="sync-status" id="sync-status"></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, serverTimestamp }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBR4DWh3eKsEkPuo5KLAByWarlgIPIdjA4",
+      authDomain: "notion-todo-widget.firebaseapp.com",
+      projectId: "notion-todo-widget",
+      storageBucket: "notion-todo-widget.firebasestorage.app",
+      messagingSenderId: "817627004338",
+      appId: "1:817627004338:web:3a1f0b246804ea800438ab"
+    };
+
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db   = getFirestore(app);
+
+    const STAR_PATH = "M12 2.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 15.8l-5.2 2.7 1-5.8L3.6 8.6l5.8-.8z";
+
+    let todos       = [];   // 로컬 상태
+    let editingId   = null;
+    let unsubscribe = null;
+    const detailTimers = {}; // id → setTimeout 핸들
+
+    // ── 화면 전환 ──────────────────────────────────────────
+    function show(id) {
+      ['loading-screen', 'login-screen', 'app-screen'].forEach(s =>
+        document.getElementById(s).classList.toggle('hidden', s !== id)
+      );
+    }
+
+    function setSyncStatus(msg) {
+      document.getElementById('sync-status').textContent = msg;
+    }
+
+    // ── 헤더 숫자/진행률 업데이트 ───────────────────────────
+    function updateHeader() {
+      const done  = todos.filter(t => t.done).length;
+      const total = todos.length;
+      const pct   = total ? Math.round(done / total * 100) : 0;
+      document.getElementById('count-label').textContent = `${done} / ${total} 완료`;
+      document.getElementById('progress-fill').style.width = pct + '%';
+      document.getElementById('progress-label').textContent = pct + '%';
+    }
+
+    // ── DOM 헬퍼 ───────────────────────────────────────────
+    function starSVG() {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.classList.add('star-svg');
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', STAR_PATH);
+      path.classList.add('star-path');
+      svg.appendChild(path);
+      return svg;
+    }
+
+    // ── 항목 DOM 생성 ──────────────────────────────────────
+    function createItemEl(t) {
+      const item = document.createElement('div');
+      item.className = 'todo-item' + (t.done ? ' done' : '');
+      item.id = 'item-' + t.id;
+
+      // 행
+      const row = document.createElement('div');
+      row.className = 'todo-row';
+
+      // 별 버튼
+      const starBtn = document.createElement('button');
+      starBtn.className = 'star-btn';
+      starBtn.setAttribute('aria-label', '완료 표시');
+      const svg = starSVG();
+      if (t.done) svg.querySelector('.star-path').classList.add('filled');
+      starBtn.appendChild(svg);
+      starBtn.addEventListener('click', () => toggleDone(t.id));
+
+      // 텍스트
+      const textSpan = document.createElement('span');
+      textSpan.className = 'todo-text';
+      textSpan.id = 'text-' + t.id;
+      textSpan.textContent = t.text;
+      textSpan.addEventListener('dblclick', () => startEdit(t.id));
+
+      // 수정 버튼
+      const editBtn = document.createElement('button');
+      editBtn.className = 'icon-btn';
+      editBtn.setAttribute('aria-label', '수정');
+      editBtn.innerHTML = '<i class="ti ti-pencil"></i>';
+      editBtn.addEventListener('click', () => startEdit(t.id));
+
+      // 삭제 버튼
+      const delBtn = document.createElement('button');
+      delBtn.className = 'icon-btn delete-btn';
+      delBtn.setAttribute('aria-label', '삭제');
+      delBtn.innerHTML = '<i class="ti ti-x"></i>';
+      delBtn.addEventListener('click', () => deleteTodo(t.id));
+
+      // 토글 버튼
+      const toggleBtn = document.createElement('button');
+      toggleBtn.className = 'toggle-btn';
+      toggleBtn.setAttribute('aria-label', '상세 내용');
+      const chevron = document.createElement('i');
+      chevron.className = 'ti ti-chevron-down toggle-icon' + (t.open ? ' open' : '');
+      toggleBtn.appendChild(chevron);
+      toggleBtn.addEventListener('click', () => toggleDetail(t.id));
+
+      row.append(starBtn, textSpan, editBtn, delBtn, toggleBtn);
+
+      // 상세 영역
+      const detailArea = document.createElement('div');
+      detailArea.className = 'detail-area' + (t.open ? ' open' : '');
+      detailArea.id = 'detail-' + t.id;
+
+      const detailInner = document.createElement('div');
+      detailInner.className = 'detail-inner';
+
+      const textarea = document.createElement('textarea');
+      textarea.className = 'detail-textarea';
+      textarea.placeholder = '상세 내용을 입력하세요...';
+      textarea.value = t.detail || '';
+      textarea.id = 'ta-' + t.id;
+
+      // ★ 핵심: 입력 이벤트는 절대 render()를 부르지 않음
+      textarea.addEventListener('input', () => {
+        const val = textarea.value;
+        const todo = todos.find(x => x.id === t.id);
+        if (todo) todo.detail = val; // 로컬만 업데이트
+
+        // Firebase는 타이핑 멈춘 후 1초 뒤 한 번만 저장
+        clearTimeout(detailTimers[t.id]);
+        detailTimers[t.id] = setTimeout(() => {
+          if (!auth.currentUser) return;
+          updateDoc(doc(db, 'users', auth.currentUser.uid, 'todos', t.id), { detail: val })
+            .then(() => { setSyncStatus('✓ 저장됨'); setTimeout(() => setSyncStatus(''), 1500); })
+            .catch(console.error);
+        }, 1000);
+      });
+
+      detailInner.appendChild(textarea);
+      detailArea.appendChild(detailInner);
+      item.append(row, detailArea);
+      return item;
+    }
+
+    // ── render: innerHTML 대신 DOM 패치 ────────────────────
+    // textarea는 절대 재생성하지 않아서 포커스/커서가 유지됨
+    function render() {
+      const list = document.getElementById('todo-list');
+      updateHeader();
+
+      if (todos.length === 0) {
+        list.innerHTML = '<div class="empty-state"><i class="ti ti-star" aria-hidden="true"></i>할 일을 추가해 보세요!</div>';
+        return;
+      }
+
+      // 없어진 항목 제거
+      const newIds = new Set(todos.map(t => t.id));
+      [...list.querySelectorAll('.todo-item')].forEach(el => {
+        const id = el.id.replace('item-', '');
+        if (!newIds.has(id)) el.remove();
+      });
+
+      // 있는 항목 업데이트 / 없으면 추가
+      todos.forEach((t, i) => {
+        let el = document.getElementById('item-' + t.id);
+
+        if (!el) {
+          el = createItemEl(t);
+        } else {
+          // done 상태
+          el.classList.toggle('done', t.done);
+          const starPath = el.querySelector('.star-path');
+          if (starPath) starPath.classList.toggle('filled', t.done);
+
+          // 텍스트 (편집 중이 아닐 때만)
+          const textEl = document.getElementById('text-' + t.id);
+          if (textEl && textEl.tagName === 'SPAN') textEl.textContent = t.text;
+
+          // textarea: 포커스 중이 아닐 때만 동기화
+          const ta = document.getElementById('ta-' + t.id);
+          if (ta && document.activeElement !== ta) ta.value = t.detail || '';
+        }
+
+        // 순서 보정
+        if (list.children[i] !== el) list.insertBefore(el, list.children[i] || null);
+      });
+
+      // 편집 모드
+      if (editingId !== null) {
+        const textEl = document.getElementById('text-' + editingId);
+        if (textEl && textEl.tagName === 'SPAN') {
+          const t = todos.find(x => x.id === editingId);
+          const input = document.createElement('input');
+          input.className = 'edit-input';
+          input.id = 'edit-' + editingId;
+          input.value = t ? t.text : '';
+          input.maxLength = 100;
+          input.addEventListener('blur', () => saveEdit(editingId));
+          input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); saveEdit(editingId); }
+            if (e.key === 'Escape') { editingId = null; render(); }
+          });
+          textEl.replaceWith(input);
+          input.focus();
+          input.select();
+        }
+      }
+    }
+
+    // ── Firebase 실시간 리스너 ─────────────────────────────
+    function todosRef(uid) {
+      return collection(db, 'users', uid, 'todos');
+    }
+
+    function startListening(uid) {
+      if (unsubscribe) unsubscribe();
+      unsubscribe = onSnapshot(todosRef(uid), snap => {
+        // 기존 open 상태 보존 (닫히지 않게)
+        const openMap = {};
+        todos.forEach(t => { openMap[t.id] = t.open; });
+
+        // detail: 현재 포커스된 textarea 값 우선 (타이핑 중인 내용 보호)
+        const localDetailMap = {};
+        todos.forEach(t => { localDetailMap[t.id] = t.detail; });
+
+        todos = snap.docs.map(d => {
+          const data = d.data();
+          const id = d.id;
+          const ta = document.getElementById('ta-' + id);
+          const isFocused = ta && document.activeElement === ta;
+          return {
+            id,
+            ...data,
+            open: openMap[id] || false,
+            // 포커스 중이면 로컬 값 유지, 아니면 Firebase 값 사용
+            detail: isFocused ? (localDetailMap[id] ?? data.detail ?? '') : (data.detail || ''),
+          };
+        });
+        todos.sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
+
+        render();
+        setSyncStatus('✓ 동기화됨');
+        setTimeout(() => setSyncStatus(''), 2000);
+      });
+    }
+
+    // ── 액션 함수들 ───────────────────────────────────────
+    function toggleDone(id) {
+      const t = todos.find(t => t.id === id);
+      if (!t || !auth.currentUser) return;
+      t.done = !t.done; // 낙관적 업데이트
+      render();
+      updateDoc(doc(db, 'users', auth.currentUser.uid, 'todos', id), { done: t.done }).catch(console.error);
+    }
+
+    function toggleDetail(id) {
+      const t = todos.find(t => t.id === id);
+      if (!t) return;
+      t.open = !t.open;
+      // render() 안 부르고 해당 DOM만 직접 수정
+      const detailArea = document.getElementById('detail-' + id);
+      if (detailArea) detailArea.classList.toggle('open', t.open);
+      const chevron = document.querySelector('#item-' + id + ' .toggle-icon');
+      if (chevron) chevron.classList.toggle('open', t.open);
+    }
+
+    function deleteTodo(id) {
+      if (!auth.currentUser) return;
+      deleteDoc(doc(db, 'users', auth.currentUser.uid, 'todos', id)).catch(console.error);
+    }
+
+    function startEdit(id) {
+      editingId = id;
+      render();
+    }
+
+    async function saveEdit(id) {
+      const input = document.getElementById('edit-' + id);
+      if (!input || !auth.currentUser) return;
+      const val = input.value.trim();
+      if (val) {
+        const t = todos.find(t => t.id === id);
+        if (t) t.text = val;
+        updateDoc(doc(db, 'users', auth.currentUser.uid, 'todos', id), { text: val }).catch(console.error);
+      }
+      editingId = null;
+      render();
+    }
+
+    async function addTodo() {
+      const input = document.getElementById('add-input');
+      const text = input.value.trim();
+      if (!text || !auth.currentUser) return;
+      input.value = '';
+      setSyncStatus('저장 중...');
+      await addDoc(todosRef(auth.currentUser.uid), {
+        text, done: false, detail: '', createdAt: serverTimestamp()
+      }).catch(console.error);
+    }
+
+    // ── 버튼 이벤트 연결 ──────────────────────────────────
+    document.getElementById('login-btn').addEventListener('click', async () => {
+      const provider = new GoogleAuthProvider();
+      try { await signInWithPopup(auth, provider); }
+      catch(e) { console.error(e); }
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+      if (unsubscribe) unsubscribe();
+      await signOut(auth);
+    });
+
+    document.getElementById('add-btn').addEventListener('click', addTodo);
+
+    document.getElementById('add-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') addTodo();
+    });
+
+    // ── 인증 상태 감지 ─────────────────────────────────────
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        show('app-screen');
+        startListening(user.uid);
+      } else {
+        show('login-screen');
+        if (unsubscribe) { unsubscribe(); unsubscribe = null; }
+        todos = [];
+        const list = document.getElementById('todo-list');
+        if (list) list.innerHTML = '';
+      }
+    });
+  </script>
+</body>
+</html>
